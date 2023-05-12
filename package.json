@@ -1,0 +1,15 @@
+{
+  "dependencies": {
+    "node-fetch": "^2.6.11"
+  },
+  "name": "geocodig",
+  "version": "1.0.0",
+  "description": "geocoding app",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Mateusz Szczepkowski",
+  "license": "ISC"
+}
