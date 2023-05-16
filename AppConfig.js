@@ -1,3 +1,0 @@
-const API_KEY='8db806aae7722c6e2fbb42a064935e8590befa297422b310a0f134044d798455';
-
-module.exports =API_KEY;
