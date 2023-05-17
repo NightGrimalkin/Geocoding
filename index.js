@@ -1,6 +1,23 @@
 require("dotenv").config();
 const fetch = require("node-fetch");
 
+const filterData = (hostData) => {
+  let filtredData = [];
+  hostData.forEach((data) => {
+    if (data.inventory.location == "") {
+      return;
+    }
+    if (
+      data.inventory.location_lan != "" &&
+      data.inventory.location_lon != ""
+    ) {
+      return;
+    }
+    filtredData.push(data);
+  });
+  return filtredData;
+};
+
 const getDataFromZabbix = async () => {
   let zabbixData;
   await fetch("http://localhost:8080/api_jsonrpc.php", {
@@ -13,8 +30,7 @@ const getDataFromZabbix = async () => {
       method: "host.get",
       params: {
         output: "hostid",
-        selectInventory: ["location"],
-        hostids: "10615",
+        selectInventory: ["location", "location_lat", "location_lon"],
       },
       id: 1,
       auth: process.env.API_KEY,
@@ -45,15 +61,39 @@ const convertAdressToLonLat = async (adress) => {
     });
   return geoData;
 };
+async function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+const modifyHostData = async (hostData) => {
+  const geoloactionDataToUpdate = [];
+  let modifiedHost;
+  let geoData;
+  for (const host in hostData) {
+    await sleep(600);
+    modifiedHost = hostData[host];
+    geoData = await convertAdressToLonLat(modifiedHost.inventory.location);
+    modifiedHost.inventory.location_lon = geoData.length>0
+      ? geoData[0].lon
+      : "";
+    modifiedHost.inventory.location_lat = geoData.length>0
+      ? geoData[0].lat
+      : "";
+    geoloactionDataToUpdate.push(modifiedHost);
+  }
+  return geoloactionDataToUpdate;
+};
 
 const callingAsyncAPIs = async () => {
-  console.log("calling");
   const inventoryData = await getDataFromZabbix();
-  console.log(inventoryData);
-  // const geoloactionData = await convertAdressToLonLat(
-  //   inventoryData.result[0].inventory.location
-  // );
-  // console.log(geoloactionData);
+  const filteredData = filterData(inventoryData.result);
+  console.log("FilteredData: \n ");
+  console.log(filteredData);
+  const hostDataToUpdate = await modifyHostData(filteredData);
+  console.log("hostDataToUpdate: \n ");
+  console.log(hostDataToUpdate);
 };
 
 callingAsyncAPIs();
