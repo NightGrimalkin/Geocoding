@@ -1,3 +1,4 @@
+
 # Used Services
 
 
@@ -14,4 +15,9 @@ Functions:
 7. `updateHostInventory` makes call to zabbix API updating one host with data passed in param 
 8. `convertAdresstoGeolocation` takes in adress andd returns object containing geolocation data
 
-
+# Configuration
+To run script on your computer you need:
+1. Running zabbix server
+2. Configure link to Zabbix API 
+3. Create `.env` file containing key to Zabbix API with CRUD permissions
+4. Run `npm install`  
