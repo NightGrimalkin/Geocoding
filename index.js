@@ -1,7 +1,7 @@
 require("dotenv").config();
 const fetch = require("node-fetch");
 
-const filteInventoryrData = (inventoryData) => {
+const filterInventoryrData = (inventoryData) => {
   let filtredData = [];
   inventoryData.forEach((data) => {
     if (data.inventory.location == "") {
@@ -41,6 +41,9 @@ const getInventoryData = async () => {
     })
     .then((data) => {
       zabbixData = data;
+    })
+    .catch((error)=>{
+      console.log(error.status, error.statusText);
     });
   return zabbixData;
 };
@@ -72,6 +75,9 @@ const updateHostInventory = async (modifiedInventoryData) => {
     .then((data) => {
       zabbixData = data;
       console.log(data);
+    })
+    .catch((error)=>{
+      console.log(error.status, error.statusText);
     });
 };
 
@@ -88,6 +94,9 @@ const convertAdressToGeolocation = async (location) => {
     })
     .then((data) => {
       geoData = data;
+    })
+    .catch((error)=>{
+      console.log(error.status, error.statusText);
     });
   return geoData;
 };
@@ -122,7 +131,7 @@ const updateInventoryData = async (inventoryData) => {
 
 const callingAsyncAPIs = async () => {
   const inventoryData = await getInventoryData();
-  const filteredInventoryData = filteInventoryrData(inventoryData.result);
+  const filteredInventoryData = filterInventoryrData(inventoryData.result);
   const modifiedInventoryData = await modifyInventoryData(filteredInventoryData);
   await updateInventoryData(modifiedInventoryData);
   
