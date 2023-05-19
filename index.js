@@ -20,7 +20,7 @@ const filterInventoryrData = (inventoryData) => {
 
 const getInventoryData = async () => {
   let zabbixData;
-  await fetch("http://localhost:8080/api_jsonrpc.php", {
+  await fetch(process.env.ZABBIX_API, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -49,7 +49,7 @@ const getInventoryData = async () => {
 };
 
 const updateHostInventory = async (modifiedInventoryData) => {
-  await fetch("http://localhost:8080/api_jsonrpc.php", {
+  await fetch(process.env.ZABBIX_API, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -74,6 +74,7 @@ const updateHostInventory = async (modifiedInventoryData) => {
     })
     .then((data) => {
       zabbixData = data;
+      console.log(`Updated host:`);
       console.log(data);
     })
     .catch((error)=>{
@@ -130,11 +131,15 @@ const updateInventoryData = async (inventoryData) => {
 }
 
 const callingAsyncAPIs = async () => {
+  console.log("Getting data from ZABBIX");
   const inventoryData = await getInventoryData();
   const filteredInventoryData = filterInventoryrData(inventoryData.result);
+  console.log(`Detected ${filteredInventoryData.length} hosts requireing update`);
+  console.log(`Modyfying geodata`);
   const modifiedInventoryData = await modifyInventoryData(filteredInventoryData);
+  console.log(`Updating ZABBIX data`);
   await updateInventoryData(modifiedInventoryData);
-  
+  console.log(`Update complete, finishing`);
 };
 
 callingAsyncAPIs();
