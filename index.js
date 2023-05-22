@@ -17,11 +17,11 @@ const filterInventoryrData = (inventoryData) => {
     ) {
       return;
     }
-    data.inventory.location = data.inventory.location.replace(numberLetterRegEx,'$& ')
-    data.inventory.location = data.inventory.location.replace(slashRegEx,'');
     keyWords.forEach(keyword=>{
       data.inventory.location = data.inventory.location.replace(keyword,'');
     })
+    data.inventory.location = data.inventory.location.replace(slashRegEx,'');
+    data.inventory.location = data.inventory.location.replace(numberLetterRegEx,'$& ')
     filtredData.push(data);
   });
   return filtredData;
