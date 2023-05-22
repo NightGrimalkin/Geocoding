@@ -2,6 +2,10 @@ require("dotenv").config();
 const fetch = require("node-fetch");
 
 const filterInventoryrData = (inventoryData) => {
+  const numberLetterRegEx=/[^0-9](?=[0-9])/g; 
+  const slashRegEx = /[0-9]+\/[0-9]+/g;
+  const keyWords = ["HUB","THINX","rack: E5"]
+
   let filtredData = [];
   inventoryData.forEach((data) => {
     if (data.inventory.location == "") {
@@ -13,6 +17,11 @@ const filterInventoryrData = (inventoryData) => {
     ) {
       return;
     }
+    data.inventory.location = data.inventory.location.replace(numberLetterRegEx,'$& ')
+    data.inventory.location = data.inventory.location.replace(slashRegEx,'');
+    keyWords.forEach(keyword=>{
+      data.inventory.location = data.inventory.location.replace(keyword,'');
+    })
     filtredData.push(data);
   });
   return filtredData;
@@ -119,6 +128,7 @@ const modifyInventoryData = async (inventoryData) => {
       geoData.length > 0 ? geoData[0].lon.substring(0,16) : "";
     modifiedHost.inventory.location_lat =
       geoData.length > 0 ? geoData[0].lat.substring(0,16) : "";
+    delete modifiedHost.inventory.location;
     geoloactionDataToUpdate.push(modifiedHost);
   }
   return geoloactionDataToUpdate;
