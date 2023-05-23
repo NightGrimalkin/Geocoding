@@ -1,10 +1,36 @@
 require("dotenv").config();
 const fetch = require("node-fetch");
+const fs = require("fs");
+const { parse } = require("csv-parse");
+const ZabbixData = require("./Class/ZabbixDataClass");
 
-const filterInventoryrData = (inventoryData) => {
-  const numberLetterRegEx=/[^0-9](?=[0-9])/g; 
+const readDataFromFile = async (file) => {
+  const arrayOfHosts = [];
+  const fd = fs
+    .createReadStream("./DataFiles/" + file)
+    .pipe(parse({ delimiter: "|", from_line: 2 }))
+    .on("data", function (row) {
+      if (file == "HUB_SW.csv") {
+        let inventoryData = { location_lat: row[17], location_lon: row[16] };
+        let hostData = new ZabbixData(row[2], inventoryData);
+        arrayOfHosts.push(hostData);
+      }else{
+        let inventoryData = { location_lat: row[16], location_lon: row[15] };
+        let hostData = new ZabbixData(row[0], inventoryData);
+        arrayOfHosts.push(hostData);
+      }
+    });
+  let readStreamPromise = new Promise(function (resolve, reject) {
+    fd.on("end", () => resolve(arrayOfHosts));
+    fd.on("error", reject);
+  });
+  return await readStreamPromise;
+};
+
+const filterInventoryData = (inventoryData) => {
+  const numberLetterRegEx = /[^0-9](?=[0-9])/g;
   const slashRegEx = /[0-9]+\/[0-9]+/g;
-  const keyWords = ["HUB","THINX","rack: E5"]
+  const keyWords = ["HUB", "THINX", "rack: E5"];
 
   let filtredData = [];
   inventoryData.forEach((data) => {
@@ -17,11 +43,14 @@ const filterInventoryrData = (inventoryData) => {
     ) {
       return;
     }
-    keyWords.forEach(keyword=>{
-      data.inventory.location = data.inventory.location.replace(keyword,'');
-    })
-    data.inventory.location = data.inventory.location.replace(slashRegEx,'');
-    data.inventory.location = data.inventory.location.replace(numberLetterRegEx,'$& ')
+    keyWords.forEach((keyword) => {
+      data.inventory.location = data.inventory.location.replace(keyword, "");
+    });
+    data.inventory.location = data.inventory.location.replace(slashRegEx, "");
+    data.inventory.location = data.inventory.location.replace(
+      numberLetterRegEx,
+      "$& "
+    );
     filtredData.push(data);
   });
   return filtredData;
@@ -51,7 +80,7 @@ const getInventoryData = async () => {
     .then((data) => {
       zabbixData = data;
     })
-    .catch((error)=>{
+    .catch((error) => {
       console.log(error.status, error.statusText);
     });
   return zabbixData;
@@ -86,7 +115,7 @@ const updateHostInventory = async (modifiedInventoryData) => {
       console.log(`Updated host:`);
       console.log(data);
     })
-    .catch((error)=>{
+    .catch((error) => {
       console.log(error.status, error.statusText);
     });
 };
@@ -105,7 +134,7 @@ const convertAdressToGeolocation = async (location) => {
     .then((data) => {
       geoData = data;
     })
-    .catch((error)=>{
+    .catch((error) => {
       console.log(error.status, error.statusText);
     });
   return geoData;
@@ -125,9 +154,9 @@ const modifyInventoryData = async (inventoryData) => {
     modifiedHost = inventoryData[inventory];
     geoData = await convertAdressToGeolocation(modifiedHost.inventory.location);
     modifiedHost.inventory.location_lon =
-      geoData.length > 0 ? geoData[0].lon.substring(0,16) : "";
+      geoData.length > 0 ? geoData[0].lon.substring(0, 16) : "";
     modifiedHost.inventory.location_lat =
-      geoData.length > 0 ? geoData[0].lat.substring(0,16) : "";
+      geoData.length > 0 ? geoData[0].lat.substring(0, 16) : "";
     delete modifiedHost.inventory.location;
     geoloactionDataToUpdate.push(modifiedHost);
   }
@@ -138,18 +167,20 @@ const updateInventoryData = async (inventoryData) => {
   for (const inventory in inventoryData) {
     await updateHostInventory(inventoryData[inventory]);
   }
-}
+};
 
 const callingAsyncAPIs = async () => {
-  console.log("Getting data from ZABBIX");
-  const inventoryData = await getInventoryData();
-  const filteredInventoryData = filterInventoryrData(inventoryData.result);
-  console.log(`Detected ${filteredInventoryData.length} hosts requireing update`);
-  console.log(`Modyfying geodata`);
-  const modifiedInventoryData = await modifyInventoryData(filteredInventoryData);
-  console.log(`Updating ZABBIX data`);
-  await updateInventoryData(modifiedInventoryData);
-  console.log(`Update complete, finishing`);
+  // console.log("Getting data from ZABBIX");
+  // const inventoryData = await getInventoryData();
+  // const filteredInventoryData = filterInventoryrData(inventoryData.result);
+  // console.log(`Detected ${filteredInventoryData.length} hosts requireing update`);
+  // console.log(`Modyfying geodata`);
+  // const modifiedInventoryData = await modifyInventoryData(filteredInventoryData);
+  // console.log(`Updating ZABBIX data`);
+  // await updateInventoryData(modifiedInventoryData);
+  // console.log(`Update complete, finishing`);
+  const zabbixFileData = await readDataFromFile();
+  console.log(zabbixFileData);
 };
 
 callingAsyncAPIs();
