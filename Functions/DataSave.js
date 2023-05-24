@@ -1,41 +1,64 @@
+const fs = require("fs");
+const fetch = require("node-fetch");
+
 const updateInventoryData = async (inventoryData) => {
-    for (const inventory in inventoryData) {
-      await updateHostInventory(inventoryData[inventory]);
-    }
-  };
+  for (const inventory in inventoryData) {
+    await updateHostInventory(inventoryData[inventory]);
+  }
+};
 
-  const updateHostInventory = async (modifiedInventoryData) => {
-    await fetch(process.env.ZABBIX_API, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        method: "host.update",
-        params: {
-          hostid: modifiedInventoryData.hostid,
-          inventory: {
-            location: modifiedInventoryData.inventory.location,
-            location_lat: modifiedInventoryData.inventory.location_lat,
-            location_lon: modifiedInventoryData.inventory.location_lon,
-          },
+const updateHostInventory = async (modifiedInventoryData) => {
+  await fetch(process.env.ZABBIX_API, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      method: "host.update",
+      params: {
+        hostid: modifiedInventoryData.hostid,
+        inventory: {
+          location: modifiedInventoryData.inventory.location,
+          location_lat: modifiedInventoryData.inventory.location_lat,
+          location_lon: modifiedInventoryData.inventory.location_lon,
         },
-        auth: process.env.API_KEY,
-        id: 1,
-      }),
+      },
+      auth: process.env.API_KEY,
+      id: 1,
+    }),
+  })
+    .then((data) => {
+      return data.json();
     })
-      .then((data) => {
-        return data.json();
-      })
-      .then((data) => {
-        zabbixData = data;
-        console.log(`Updated host:`);
-        console.log(data);
-      })
-      .catch((error) => {
-        console.log(error.status, error.statusText);
-      });
-  };
+    .then((data) => {
+      zabbixData = data;
+      console.log(`Updated host:`);
+      console.log(data);
+    })
+    .catch((error) => {
+      console.log(error.status, error.statusText);
+    });
+};
 
-module.exports = updateInventoryData;
+
+
+const createRaport = async (invalidHosts) => {
+  return new Promise((resolve, reject) => {
+    const date = new Date();
+    const dateString = `${date.toLocaleDateString()} ${date.getHours()}:${date.getMinutes()}`;
+    const fd = fs.createWriteStream("./Raports/raport.txt");
+    fd.write(`Raport z ${dateString} \n`);
+    fd.write(`Nie udał się update ${invalidHosts.length} hostów \n`);
+    if (invalidHosts.length != 0) {
+      invalidHosts.forEach((host) => {
+        fd.write(`${JSON.stringify(host)} \n`);
+      });
+    }
+    fd.end();
+    fd.on("finish", ()=>{resolve()});
+    fd.on("error", (error)=>{reject(error)})
+  });
+};
+
+module.exports = { updateInventoryData, createRaport };

@@ -1,20 +1,30 @@
+const fetch = require("node-fetch");
 
 const modifyInventoryData = async (inventoryData) => {
     const geoloactionDataToUpdate = [];
+    const invalidHosts =[]
     let modifiedHost;
     let geoData;
     for (const inventory in inventoryData) {
       await sleep(600);
       modifiedHost = inventoryData[inventory];
       geoData = await convertAdressToGeolocation(modifiedHost.inventory.location);
+      if(geoData.length > 0){
+        modifiedHost.inventory.location_lon = geoData[0].lon.substring(0, 16);
+        modifiedHost.inventory.location_lat = geoData[0].lat.substring(0, 16);
+        geoloactionDataToUpdate.push(modifiedHost);
+      }else{
+        modifiedHost.inventory.location_lon = "";
+        modifiedHost.inventory.location_lat = "";
+        invalidHosts.push(modifiedHost);
+      }
       modifiedHost.inventory.location_lon =
         geoData.length > 0 ? geoData[0].lon.substring(0, 16) : "";
-      modifiedHost.inventory.location_lat =
-        geoData.length > 0 ? geoData[0].lat.substring(0, 16) : "";
+      
       delete modifiedHost.inventory.location;
-      geoloactionDataToUpdate.push(modifiedHost);
+      
     }
-    return geoloactionDataToUpdate;
+    return {geoloactionDataToUpdate, invalidHosts};
   };
 
   const convertAdressToGeolocation = async (location) => {

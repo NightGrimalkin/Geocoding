@@ -2,7 +2,8 @@
   "dependencies": {
     "csv": "^6.3.0",
     "dotenv": "^16.0.3",
-    "node-fetch": "^2.6.11"
+    "node-fetch": "^2.6.11",
+    "util": "^0.12.5"
   },
   "name": "geocodig",
   "version": "1.0.0",
