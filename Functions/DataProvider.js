@@ -4,6 +4,7 @@ const fs = require("fs");
 const fetch = require("node-fetch");
 const { parse } = require("csv-parse");
 
+
 const readDataFromFile = async (file) => {
   const arrayOfHosts = [];
   const fd = fs
@@ -82,10 +83,14 @@ const getHostIdByName = async (hostName) => {
       return data.json();
     })
     .then((data) => {
+      if (Object.hasOwn(data, "error")) {
+        throw new Error("Błąd połączenia z api Zabbixa, sprawdź API_KEY");
+      }
       zabbixData = data;
     })
     .catch((error) => {
-      console.log(error.status, error.statusText);
+      console.log(error.message);
+      process.exit(1);
     });
   return zabbixData;
 };
@@ -106,7 +111,7 @@ const convertHostsToSaveFormat = async (hostsfromFile) => {
       hostsToUpdate.push(modifiedHost);
     }
   }
-  return {hostsToUpdate, invalidHosts};
+  return { hostsToUpdate, invalidHosts };
 };
 
 module.exports = {
