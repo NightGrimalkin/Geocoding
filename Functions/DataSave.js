@@ -1,5 +1,10 @@
 const fs = require("fs");
 const fetch = require("node-fetch");
+const https = require("https");
+
+const httpsAgent = new https.Agent({
+  rejectUnauthorized: false,
+});
 
 const updateInventoryData = async (inventoryData) => {
   for (const inventory in inventoryData) {

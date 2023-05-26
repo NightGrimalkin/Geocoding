@@ -3,7 +3,11 @@ const ZabbixData = require("./../Class/ZabbixDataClass");
 const fs = require("fs");
 const fetch = require("node-fetch");
 const { parse } = require("csv-parse");
+const https = require("https");
 
+const httpsAgent = new https.Agent({
+  rejectUnauthorized: false,
+});
 
 const readDataFromFile = async (file) => {
   const arrayOfHosts = [];
@@ -59,9 +63,10 @@ const getInventoryData = async () => {
   return zabbixData;
 };
 
-const getHostIdByName = async (hostName) => {
+const getHostsId = async () => {
   let zabbixData;
   await fetch(process.env.ZABBIX_API, {
+    agent: httpsAgent,
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -70,10 +75,7 @@ const getHostIdByName = async (hostName) => {
       jsonrpc: "2.0",
       method: "host.get",
       params: {
-        output: "hostid",
-        filter: {
-          name: hostName,
-        },
+        output: ["hostid", "name"],
       },
       id: 1,
       auth: process.env.API_KEY,
@@ -86,7 +88,7 @@ const getHostIdByName = async (hostName) => {
       if (Object.hasOwn(data, "error")) {
         throw new Error("Błąd połączenia z api Zabbixa, sprawdź API_KEY");
       }
-      zabbixData = data;
+      zabbixData = data.result;
     })
     .catch((error) => {
       console.log(error.message);
@@ -96,21 +98,30 @@ const getHostIdByName = async (hostName) => {
 };
 
 const convertHostsToSaveFormat = async (hostsfromFile) => {
+  console.log(hostsfromFile);
+  const hostsFromZabbix = await getHostsId();
   const hostsToUpdate = [];
   const invalidHosts = [];
+  let zabbixDataLength;
   let modifiedHost;
   for (const host in hostsfromFile) {
-    const hostId = await getHostIdByName(hostsfromFile[host].name);
-    if (hostId.result.length == 0) {
-      invalidHosts.push(hostsfromFile[host]);
-    } else {
-      modifiedHost = new ZabbixData(
-        hostId.result[0].hostid,
-        hostsfromFile[host].inventory
-      );
-      hostsToUpdate.push(modifiedHost);
+    zabbixDataLength = hostsFromZabbix.length;
+    for (const zabbixHost in hostsFromZabbix) {
+      if (hostsFromZabbix[zabbixHost].name.includes(hostsfromFile[host].name)) {
+        modifiedHost = new ZabbixData(
+          hostsFromZabbix[zabbixHost].hostid,
+          hostsfromFile[host].inventory
+        );
+        hostsToUpdate.push(modifiedHost);
+        break;
+      }
+      if (!--zabbixDataLength) {
+        invalidHosts.push(hostsfromFile[host]);
+      }
     }
   }
+  console.log("hostsToUpdate: ");
+  console.log(hostsToUpdate);
   return { hostsToUpdate, invalidHosts };
 };
 
