@@ -14,6 +14,7 @@ const updateInventoryData = async (inventoryData) => {
 
 const updateHostInventory = async (modifiedInventoryData) => {
   await fetch(process.env.ZABBIX_API, {
+    agent: httpsAgent,
     method: "POST",
     headers: {
       "Content-Type": "application/json",
