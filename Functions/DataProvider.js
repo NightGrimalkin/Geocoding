@@ -98,15 +98,14 @@ const getHostsId = async () => {
 };
 
 const convertHostsToSaveFormat = async (hostsfromFile) => {
-  console.log(hostsfromFile);
   const hostsFromZabbix = await getHostsId();
   const hostsToUpdate = [];
   const invalidHosts = [];
-  let zabbixDataLength;
+  let hostsfromFileLength;
   let modifiedHost;
-  for (const host in hostsfromFile) {
-    zabbixDataLength = hostsFromZabbix.length;
-    for (const zabbixHost in hostsFromZabbix) {
+  for (const zabbixHost in hostsFromZabbix ) {
+    hostsfromFileLength = hostsfromFile.length;
+    for (const host in hostsfromFile) {
       if (hostsFromZabbix[zabbixHost].name.includes(hostsfromFile[host].name)) {
         modifiedHost = new ZabbixData(
           hostsFromZabbix[zabbixHost].hostid,
@@ -115,7 +114,7 @@ const convertHostsToSaveFormat = async (hostsfromFile) => {
         hostsToUpdate.push(modifiedHost);
         break;
       }
-      if (!--zabbixDataLength) {
+      if (!--hostsfromFileLength) {
         invalidHosts.push(hostsfromFile[host]);
       }
     }
