@@ -29,9 +29,9 @@ Object structure:
 
 
 # Configuration
-To run script on your computer you'll need:
+To run script on your machine you'll need:
 1. Running zabbix server
 2. Node.js installed, version 14+
-3. Create `.env` file containing variable `API_KEY` containing key to Zabbix API and variable `ZABBIX_API` containing link to Zabbix API 
+3. Create `.env` file containing  `API_KEY`- key to Zabbix API, `ZABBIX_API`- link to Zabbix API, `FILE_NAME_1`- name of first file (HUB), `FILE_NAME_2`- name of second file (OLT), `PROTOCOL`- `HTTP` if SSL certificate must be omited (not recommended), `EXE_TYPE`- `FILE` if reading from files, `API` if using geocoding api
 4. Run `npm install` in project's root folder  
 5. Run `node index.js` in project's root folder  
