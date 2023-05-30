@@ -65,8 +65,7 @@ const getInventoryData = async () => {
 
 const getHostsId = async () => {
   let zabbixData;
-  await fetch(process.env.ZABBIX_API, {
-    agent: httpsAgent,
+  const request ={
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -80,7 +79,11 @@ const getHostsId = async () => {
       id: 1,
       auth: process.env.API_KEY,
     }),
-  })
+  }
+  if(process.env.PROTOCOL=="HTTP"){
+    request.agent = httpsAgent;
+  }
+  await fetch(process.env.ZABBIX_API, request)
     .then((data) => {
       return data.json();
     })
@@ -100,7 +103,8 @@ const getHostsId = async () => {
 const convertHostsToSaveFormat = async (hostsfromFile) => {
   const hostsFromZabbix = await getHostsId();
   const hostsToUpdate = [];
-  const invalidHosts = [];
+  const invalidHosts = []
+  const validHostNames=[];
   let modifiedHost;
   for (const zabbixHost in hostsFromZabbix) {
     for (const host in hostsfromFile) {
@@ -110,11 +114,13 @@ const convertHostsToSaveFormat = async (hostsfromFile) => {
           hostsfromFile[host].inventory
         );
         hostsToUpdate.push(modifiedHost);
-      } else {
-        if (!invalidHosts.includes(hostsfromFile[host])) {
-          invalidHosts.push(hostsfromFile[host]);
-        }
-      }
+        validHostNames.push(hostsfromFile[host].name);
+      } 
+    }
+  }
+  for (const host in hostsfromFile) {
+    if(!validHostNames.includes(hostsfromFile[host].name)){
+      invalidHosts.push(hostsfromFile[host]);
     }
   }
   return { hostsToUpdate, invalidHosts };

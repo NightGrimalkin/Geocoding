@@ -13,8 +13,7 @@ const updateInventoryData = async (inventoryData) => {
 };
 
 const updateHostInventory = async (modifiedInventoryData) => {
-  await fetch(process.env.ZABBIX_API, {
-    agent: httpsAgent,
+  const request =  {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -33,7 +32,11 @@ const updateHostInventory = async (modifiedInventoryData) => {
       auth: process.env.API_KEY,
       id: 1,
     }),
-  })
+  }
+  if(process.env.PROTOCOL=="HTTP"){
+    request.agent = httpsAgent;
+  }
+  await fetch(process.env.ZABBIX_API,request)
     .then((data) => {
       return data.json();
     })
@@ -46,8 +49,6 @@ const updateHostInventory = async (modifiedInventoryData) => {
       console.log(error.status, error.statusText);
     });
 };
-
-
 
 const createRaport = async (invalidHosts) => {
   return new Promise((resolve, reject) => {
