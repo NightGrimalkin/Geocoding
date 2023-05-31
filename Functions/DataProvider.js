@@ -109,9 +109,12 @@ const convertHostsToSaveFormat = async (hostsfromFile) => {
   for (const zabbixHost in hostsFromZabbix) {
     for (const host in hostsfromFile) {
       if (hostsFromZabbix[zabbixHost].name.includes(hostsfromFile[host].name)) {
+        let inventory = hostsfromFile[host].inventory;
+        inventory.location_lat = inventory.location_lat.replace(/,/g,'.');
+        inventory.location_lon = inventory.location_lon.replace(/,/g,'.');
         modifiedHost = new ZabbixData(
           hostsFromZabbix[zabbixHost].hostid,
-          hostsfromFile[host].inventory
+          inventory
         );
         hostsToUpdate.push(modifiedHost);
         validHostNames.push(hostsfromFile[host].name);
